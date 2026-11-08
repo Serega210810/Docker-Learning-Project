@@ -94,24 +94,6 @@ curl http://localhost:8000/stats/aB3xK9
 4. При переходе по /{short_code} приложение сначала ищет в Redis (мгновенно), потом в БД
 5. Счётчик кликов хранится в Redis для высокой скорости записи
 
-Docker-Learning-Project/
-├── app/
-│   ├── __init__.py
-│   ├── main.py          # FastAPI приложение и роуты
-│   ├── config.py        # Настройки из .env
-│   ├── database.py      # Подключение к PostgreSQL
-│   ├── cache.py         # Работа с Redis
-│   ├── models.py        # SQLAlchemy модели
-│   ├── schemas.py       # Pydantic схемы
-│   └── utils.py         # Генерация short_code
-├── Dockerfile           # Multi-stage build
-├── docker-compose.yml   # Оркестрация сервисов
-├── .env.example         # Пример переменных окружения
-├── .gitignore
-├── .dockerignore
-├── requirements.txt
-└── README.md
-
 🐳 Docker-конфигурация
 Dockerfile
 Использует multi-stage build для минимизации размера образа:
@@ -133,7 +115,7 @@ RUN chown -R appuser:appuser /app
 USER appuser
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')" || exit 1
+CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')" || exit 1
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ⚙️ Переменные окружения
