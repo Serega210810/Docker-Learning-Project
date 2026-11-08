@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  # ====== FastAPI приложение ======
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: url_shortener_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ====== PostgreSQL ======
+  db:
+    image: postgres:16-alpine
+    container_name: url_shortener_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: shortener
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d shortener"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ====== Redis ======
+  redis:
+    image: redis:7-alpine
+    container_name: url_shortener_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ====== Volumes (персистентные данные) ======
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+# ====== Сеть ======
+networks:
+  app_network:
+    driver: bridge
